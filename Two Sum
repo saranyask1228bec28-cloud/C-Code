@@ -1,0 +1,72 @@
+#include <stdlib.h>
+#include <math.h>
+
+// Define a structure for the Hash Table nodes
+struct HashTableNode {
+    int key;
+    int value;
+    struct HashTableNode* next;
+};
+
+// Main Two Sum function
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    // 1. Determine hash table size (using a prime number close to array size improves distribution)
+    int hashSize = numsSize * 2; 
+    struct HashTableNode** hashTable = (struct HashTableNode**)calloc(hashSize, sizeof(struct HashTableNode*));
+    
+    // 2. Allocate output memory
+    int* result = (int*)malloc(2 * sizeof(int));
+    *returnSize = 0; // Initialize as empty in case no match is found
+
+    // 3. Single-pass iteration
+    for (int i = 0; i < numsSize; i++) {
+        int complement = target - nums[i];
+        
+        // Compute hash index (handling negative values safely)
+        int hashIndex = abs(complement) % hashSize;
+        
+        // Search for the complement in the hash table
+        struct HashTableNode* curr = hashTable[hashIndex];
+        while (curr != NULL) {
+            if (curr->key == complement) {
+                result[0] = curr->value;
+                result[1] = i;
+                *returnSize = 2;
+                
+                // Free the hash table memory before returning to prevent memory leaks
+                for (int j = 0; j < hashSize; j++) {
+                    struct HashTableNode* node = hashTable[j];
+                    while (node != NULL) {
+                        struct HashTableNode* tmp = node;
+                        node = node->next;
+                        free(tmp);
+                    }
+                }
+                free(hashTable);
+                return result;
+            }
+            curr = curr->next;
+        }
+        
+        // If complement not found, insert current number and index into hash table
+        int numIndex = abs(nums[i]) % hashSize;
+        struct HashTableNode* newNode = (struct HashTableNode*)malloc(sizeof(struct HashTableNode));
+        newNode->key = nums[i];
+        newNode->value = i;
+        newNode->next = hashTable[numIndex];
+        hashTable[numIndex] = newNode;
+    }
+    
+    // Clean up hash table memory if no solution is found
+    for (int j = 0; j < hashSize; j++) {
+        struct HashTableNode* node = hashTable[j];
+        while (node != NULL) {
+            struct HashTableNode* tmp = node;
+            node = node->next;
+            free(tmp);
+        }
+    }
+    free(hashTable);
+    
+    return result;
+}
