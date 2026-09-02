@@ -1,0 +1,39 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+char* convert(char* s, int numRows) {
+    // Edge case: No conversion needed
+    if (numRows == 1 || numRows >= strlen(s)) {
+        return s;
+    }
+
+    int len = strlen(s);
+    
+    // Allocate space for the final result (+1 for null terminator)
+    char* result = (char*)malloc((len + 1) * sizeof(char));
+    
+    // Tracks the current index where we write into the result string
+    int count = 0;
+    
+    // The size of a full cycle (down and diagonally up)
+    int cycleLen = 2 * numRows - 2;
+
+    // Process row by row
+    for (int i = 0; i < numRows; i++) {
+        for (int j = 0; j + i < len; j += cycleLen) {
+            // Append the character from the vertical downward step
+            result[count++] = s[j + i];
+            
+            // Append the character from the diagonal upward step
+            // (Skip for the first and last rows as they don't have middle elements)
+            if (i != 0 && i != numRows - 1 && j + cycleLen - i < len) {
+                result[count++] = s[j + cycleLen - i];
+            }
+        }
+    }
+    
+    // Add null terminator to finalize the C-string
+    result[count] = '\0';
+    return result;
+}
