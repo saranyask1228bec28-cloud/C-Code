@@ -1,0 +1,68 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// Mapping of digits to letters as on a telephone keypad
+const char* phone_map[] = {
+    "",     // 0
+    "",     // 1
+    "abc",  // 2
+    "def",  // 3
+    "ghi",  // 4
+    "jkl",  // 5
+    "mno",  // 6
+    "pqrs", // 7
+    "tuv",  // 8
+    "wxyz"  // 9
+};
+
+void backtrack(char* digits, int index, char* current, char** result, int* returnSize) {
+    // Base case: if we reached the end of the digit string
+    if (digits[index] == '\0') {
+        result[*returnSize] = strdup(current); // Copy the built string into the result array
+        (*returnSize)++;
+        return;
+    }
+
+    int digit = digits[index] - '0';
+    const char* letters = phone_map[digit];
+
+    // Loop through all letters mapped to the current digit
+    for (int i = 0; letters[i] != '\0'; i++) {
+        current[index] = letters[i]; // Choose the letter
+        current[index + 1] = '\0';   // Maintain null-termination
+        backtrack(digits, index + 1, current, result, returnSize); // Move to the next digit
+    }
+}
+
+/**
+ * Note: The returned array must be malloced, assume caller calls free().
+ */
+char** letterCombinations(char* digits, int* returnSize) {
+    *returnSize = 0;
+    int len = strlen(digits);
+    if (len == 0) {
+        return NULL;
+    }
+
+    // Calculate maximum possible combinations to allocate enough memory
+    // (Up to 4^4 = 256 combinations based on the problem constraints)
+    int max_combinations = 1;
+    for (int i = 0; i < len; i++) {
+        int digit = digits[i] - '0';
+        max_combinations *= strlen(phone_map[digit]);
+    }
+
+    // Allocate memory for the array of strings
+    char** result = (char**)malloc(max_combinations * sizeof(char*));
+    
+    // Temporary buffer to build each combination string (+1 for null terminator)
+    char* current = (char*)malloc((len + 1) * sizeof(char));
+    current[0] = '\0';
+
+    // Start backtracking from index 0
+    backtrack(digits, 0, current, result, returnSize);
+
+    free(current); // Clean up the temporary buffer
+    return result;
+}
