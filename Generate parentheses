@@ -1,0 +1,56 @@
+#include <stdlib.h>
+#include <string.h>
+
+// Helper function to calculate the nth Catalan number to allocate exact memory
+int getCatalanNumber(int n) {
+    long long res = 1;
+    for (int i = 1; i <= n; i++) {
+        res = res * (n + i) / i;
+    }
+    return res / (n + 1);
+}
+
+void backtrack(int n, int open_count, int close_count, char* current_str, int index, char** result, int* returnSize) {
+    // Base case: a valid combination of length 2*n is formed
+    if (index == 2 * n) {
+        current_str[index] = '\0'; // Null-terminate the string
+        result[*returnSize] = malloc((2 * n + 1) * sizeof(char));
+        strcpy(result[*returnSize], current_str);
+        (*returnSize)++;
+        return;
+    }
+
+    // Rule 1: Add an opening bracket if we haven't used all n of them
+    if (open_count < n) {
+        current_str[index] = '(';
+        backtrack(n, open_count + 1, close_count, current_str, index + 1, result, returnSize);
+    }
+
+    // Rule 2: Add a closing bracket if it won't violate the balance
+    if (close_count < open_count) {
+        current_str[index] = ')';
+        backtrack(n, open_count, close_count + 1, current_str, index + 1, result, returnSize);
+    }
+}
+
+/**
+ * Note: The returned array must be malloced, assume caller calls free().
+ */
+char** generateParenthesis(int n, int* returnSize) {
+    int totalCombinations = getCatalanNumber(n);
+    
+    // Allocate space for the array of strings
+    char** result = (char**)malloc(totalCombinations * sizeof(char*));
+    *returnSize = 0;
+
+    // Temporary buffer to build the strings (+1 for null terminator)
+    char* current_str = (char*)malloc((2 * n + 1) * sizeof(char));
+
+    // Start backtracking
+    backtrack(n, 0, 0, current_str, 0, result, returnSize);
+
+    // Free the temporary buffer
+    free(current_str);
+
+    return result;
+}
