@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     struct ListNode *next;
+ * };
+ */
+
+// Structure to represent a Heap node
+typedef struct {
+    struct ListNode* node;
+} HeapNode;
+
+// Function to swap two heap nodes
+void swap(HeapNode* a, HeapNode* b) {
+    HeapNode temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+// Min-Heapify function to maintain the min-heap property
+void minHeapify(HeapNode* heap, int size, int idx) {
+    int smallest = idx;
+    int left = 2 * idx + 1;
+    int right = 2 * idx + 2;
+
+    if (left < size && heap[left].node->val < heap[smallest].node->val)
+        smallest = left;
+
+    if (right < size && heap[right].node->val < heap[smallest].node->val)
+        smallest = right;
+
+    if (smallest != idx) {
+        swap(&heap[idx], &heap[smallest]);
+        minHeapify(heap, size, smallest);
+    }
+}
+
+// Function to merge k sorted linked lists
+struct ListNode* mergeKLists(struct ListNode** lists, int listsSize) {
+    if (listsSize == 0) return NULL;
+
+    // Allocate memory for the heap
+    HeapNode* heap = (HeapNode*)malloc(sizeof(HeapNode) * listsSize);
+    int heapSize = 0;
+
+    // Push the head of each non-empty list into the heap
+    for (int i = 0; i < listsSize; i++) {
+        if (lists[i] != NULL) {
+            heap[heapSize].node = lists[i];
+            heapSize++;
+        }
+    }
+
+    // Build the initial min-heap
+    for (int i = (heapSize - 1) / 2; i >= 0; i--) {
+        minHeapify(heap, heapSize, i);
+    }
+
+    // Dummy head to simplify list construction
+    struct ListNode dummy;
+    struct ListNode* tail = &dummy;
+    dummy.next = NULL;
+
+    // Process nodes until the heap is empty
+    while (heapSize > 0) {
+        // Extract the minimum node
+        struct ListNode* minNode = heap[0].node;
+        tail->next = minNode;
+        tail = tail->next;
+
+        // If the extracted node has a next node, replace the root with it
+        if (minNode->next != NULL) {
+            heap[0].node = minNode->next;
+        } else {
+            // Otherwise, replace the root with the last item in the heap
+            heap[0] = heap[heapSize - 1];
+            heapSize--;
+        }
+
+        // Restore min-heap property
+        if (heapSize > 0) {
+            minHeapify(heap, heapSize, 0);
+        }
+    }
+
+    free(heap);
+    return dummy.next;
+}
