@@ -1,0 +1,8 @@
+#include <stdlib.h>
+#include <string.h>
+
+// Helper function to calculate the nth Catalan number to allocate exact memory
+int getCatalanNumber(int n) {
+    long long res = 1;
+    for (int i = 1; i <= n; i++) {
+        res = res * (n + i) / i;
