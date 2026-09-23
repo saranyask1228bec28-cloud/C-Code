@@ -1,0 +1,32 @@
+#include <vector>
+#include <unordered_set>
+#include <string>
+
+class Solution {
+public:
+    bool isValidSudoku(std::vector<std::vector<char>>& board) {
+        std::unordered_set<std::string> seen;
+        
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j) {
+                char val = board[i][j];
+                if (val == '.') continue;
+                
+                // Create unique string keys for tracking
+                std::string row_item = "row " + std::to_string(i) + " " + val;
+                std::string col_item = "col " + std::to_string(j) + " " + val;
+                std::string box_item = "box " + std::to_string(i / 3) + "-" + std::to_string(j / 3) + " " + val;
+                
+                // If any key already exists, the board is invalid
+                if (seen.count(row_item) || seen.count(col_item) || seen.count(box_item)) {
+                    return false;
+                }
+                
+                seen.insert(row_item);
+                seen.insert(col_item);
+                seen.insert(box_item);
+            }
+        }
+        return true;
+    }
+};
