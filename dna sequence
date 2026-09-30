@@ -1,0 +1,52 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/**
+ * Note: The returned array must be malloced, assume caller calls free().
+ */
+char** findRepeatedDnaSequences(char* s, int* returnSize) {
+    *returnSize = 0;
+    int len = strlen(s);
+    if (len < 10) return NULL;
+
+    // A boolean array for 4^10 possible DNA combinations (1,048,576)
+    // 0: unseen, 1: seen once, 2: seen multiple times
+    unsigned char* seen = (unsigned char*)calloc(1048576, sizeof(unsigned char));
+    
+    // Allocate maximum possible results
+    char** result = (char**)malloc(sizeof(char*) * (len - 9));
+    
+    // Map ACGT to 2-bit values: A=00, C=01, G=10, T=11
+    int map[26];
+    map['A' - 'A'] = 0;
+    map['C' - 'A'] = 1;
+    map['G' - 'A'] = 2;
+    map['T' - 'A'] = 3;
+
+    int hash = 0;
+    // Compute the hash for the first 9 characters
+    for (int i = 0; i < 9; i++) {
+        hash = (hash << 2) | map[s[i] - 'A'];
+    }
+
+    // Sliding window
+    for (int i = 9; i < len; i++) {
+        // Shift left, add new character, and mask to keep it 20 bits (10 characters)
+        hash = ((hash << 2) | map[s[i] - 'A']) & 0xFFFFF;
+        
+        if (seen[hash] == 1) {
+            // Found a duplicate, store it in the result
+            result[*returnSize] = (char*)malloc(11 * sizeof(char));
+            strncpy(result[*returnSize], &s[i - 9], 10);
+            result[*returnSize][10] = '\0';
+            (*returnSize)++;
+            seen[hash] = 2; // Mark as added to result to avoid duplicates
+        } else if (seen[hash] == 0) {
+            seen[hash] = 1; // Mark as seen
+        }
+    }
+
+    free(seen);
+    return result;
+}
