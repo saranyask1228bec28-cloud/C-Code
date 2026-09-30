@@ -1,0 +1,36 @@
+#include <limits.h>
+#include <stdlib.h>
+
+int divide(int dividend, int divisor) {
+    // Handle the special 32-bit overflow case
+    if (dividend == INT_MIN && divisor == -1) {
+        return INT_MAX;
+    }
+    
+    // Determine the sign of the result
+    int negative = (dividend < 0) ^ (divisor < 0);
+    
+    // Use long long to safely store absolute values without 32-bit overflow
+    long long dvd = llabs((long long)dividend);
+    long long dvs = llabs((long long)divisor);
+    
+    long long quotient = 0;
+    
+    // Perform exponential subtraction using safe bit shifting on positive numbers
+    while (dvd >= dvs) {
+        long long temp_dvs = dvs;
+        long long multiple = 1;
+        
+        // Double the divisor until it exceeds the remaining dividend
+        while (dvd >= (temp_dvs << 1)) {
+            temp_dvs <<= 1;
+            multiple <<= 1;
+        }
+        
+        dvd -= temp_dvs;
+        quotient += multiple;
+    }
+    
+    // Apply the sign and cast back to a standard 32-bit integer
+    return negative ? (int)-quotient : (int)quotient;
+}
