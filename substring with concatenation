@@ -1,0 +1,108 @@
+#include <stdlib.h>
+#include <string.h>
+
+// Helper structure to keep track of words and their initial indices for sorting
+typedef struct {
+    char *word;
+    int original_index;
+} WordInfo;
+
+// Comparison function for qsort to sort words alphabetically
+int compare_words(const void *a, const void *b) {
+    return strcmp(((WordInfo*)a)->word, ((WordInfo*)b)->word);
+}
+
+// Binary search to find if a substring matches any word in our sorted list
+int find_word_index(WordInfo *sorted_words, int num_words, char *substr, int word_len) {
+    int low = 0, high = num_words - 1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        int cmp = strncmp(substr, sorted_words[mid].word, word_len);
+        if (cmp == 0) {
+            // Find the first occurrence in case of duplicates
+            while (mid > 0 && strncmp(substr, sorted_words[mid - 1].word, word_len) == 0) {
+                mid--;
+            }
+            return mid;
+        } else if (cmp < 0) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return -1;
+}
+
+int* findSubstring(char* s, char** words, int wordsSize, int* returnSize) {
+    *returnSize = 0;
+    if (!s || wordsSize == 0) return NULL;
+
+    int s_len = strlen(s);
+    int word_len = strlen(words[0]);
+    int total_len = wordsSize * word_len;
+    
+    if (s_len < total_len) return NULL;
+
+    // Allocate memory for tracking words
+    WordInfo *sorted_words = (WordInfo*)malloc(wordsSize * sizeof(WordInfo));
+    for (int i = 0; i < wordsSize; i++) {
+        sorted_words[i].word = words[i];
+    }
+    qsort(sorted_words, wordsSize, sizeof(WordInfo), compare_words);
+
+    // Count duplicate frequencies for validation
+    int *word_counts = (int*)calloc(wordsSize, sizeof(int));
+    for (int i = 0; i < wordsSize; ) {
+        int j = i;
+        while (j < wordsSize && strcmp(sorted_words[i].word, sorted_words[j].word) == 0) {
+            j++;
+        }
+        int freq = j - i;
+        for (int k = i; k < j; k++) {
+            word_counts[k] = freq;
+            sorted_words[k].original_index = k; // Map duplicates to the same base index group
+        }
+        i = j;
+    }
+
+    int *result = (int*)malloc(s_len * sizeof(int));
+    int *curr_counts = (int*)malloc(wordsSize * sizeof(int));
+
+    // Sliding window for each offset
+    for (int i = 0; i < word_len; i++) {
+        int left = i, right = i, count = 0;
+        memset(curr_counts, 0, wordsSize * sizeof(int));
+
+        while (right + word_len <= s_len) {
+            int idx = find_word_index(sorted_words, wordsSize, s + right, word_len);
+            right += word_len;
+
+            if (idx != -1) {
+                curr_counts[idx]++;
+                count++;
+
+                // If a word is seen more times than it appears in words array, shift left
+                while (curr_counts[idx] > word_counts[idx]) {
+                    int left_idx = find_word_index(sorted_words, wordsSize, s + left, word_len);
+                    curr_counts[left_idx]--;
+                    left += word_len;
+                    count--;
+                }
+
+                if (count == wordsSize) {
+                    result[(*returnSize)++] = left;
+                }
+            } else {
+                memset(curr_counts, 0, wordsSize * sizeof(int));
+                count = 0;
+                left = right;
+            }
+        }
+    }
+
+    free(sorted_words);
+    free(word_counts);
+    free(curr_counts);
+
+    return result;
+}
