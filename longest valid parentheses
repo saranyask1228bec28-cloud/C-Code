@@ -1,0 +1,31 @@
+#include <string.h>
+
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
+int longestValidParentheses(char* s) {
+    int len = strlen(s);
+    if (len == 0) return 0;
+
+    // Allocate an array to simulate the stack
+    int stack[len + 1]; 
+    int top = -1;
+    int max_len = 0;
+
+    // Initialize stack with a base index of -1
+    stack[++top] = -1;
+
+    for (int i = 0; i < len; i++) {
+        if (s[i] == '(') {
+            stack[++top] = i; // Push index
+        } else {
+            top--; // Pop index
+            if (top == -1) {
+                stack[++top] = i; // Stack empty, push new base
+            } else {
+                max_len = MAX(max_len, i - stack[top]);
+            }
+        }
+    }
+
+    return max_len;
+}
