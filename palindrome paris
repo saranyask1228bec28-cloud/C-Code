@@ -1,0 +1,131 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+// Simple hash map node structure for strings
+typedef struct HashNode {
+    char *word;
+    int index;
+    struct HashNode *next;
+} HashNode;
+
+#define HASH_SIZE 10007
+
+unsigned int hash(const char *str) {
+    unsigned int h = 0;
+    while (*str) {
+        h = (h * 31) + *str++;
+    }
+    return h % HASH_SIZE;
+}
+
+void insert(HashNode **table, const char *word, int index) {
+    unsigned int h = hash(word);
+    HashNode *node = malloc(sizeof(HashNode));
+    node->word = strdup(word);
+    node->index = index;
+    node->next = table[h];
+    table[h] = node;
+}
+
+int search(HashNode **table, const char *word) {
+    unsigned int h = hash(word);
+    HashNode *curr = table[h];
+    while (curr) {
+        if (strcmp(curr->word, word) == 0) {
+            return curr->index;
+        }
+        curr = curr->next;
+    }
+    return -1;
+}
+
+bool isPalindrome(const char *str, int start, int end) {
+    while (start < end) {
+        if (str[start++] != str[end--]) return false;
+    }
+    return true;
+}
+
+// Helper to reverse a specific substring
+void reverseStr(const char *str, int start, int end, char *buf) {
+    int len = 0;
+    for (int i = end; i >= start; i--) {
+        buf[len++] = str[i];
+    }
+    buf[len] = '\0';
+}
+
+/**
+ * Return an array of arrays of size *returnSize.
+ * The sizes of the arrays are returned as *returnColumnSizes array.
+ * Note: Both returned arrays and *columnSizes array must be malloced, assume caller calls free().
+ */
+int** palindromePairs(char** words, int wordsSize, int* returnSize, int** returnColumnSizes) {
+    HashNode *table[HASH_SIZE] = {NULL};
+    for (int i = 0; i < wordsSize; i++) {
+        insert(table, words[i], i);
+    }
+
+    int capacity = 1000;
+    int **res = malloc(capacity * sizeof(int*));
+    *returnSize = 0;
+
+    for (int i = 0; i < wordsSize; i++) {
+        int len = strlen(words[i]);
+        char buf[305];
+
+        for (int j = 0; j <= len; j++) {
+            // Case 1: Prefix words[i][0...j-1] is a palindrome
+            if (isPalindrome(words[i], 0, j - 1)) {
+                reverseStr(words[i], j, len - 1, buf);
+                int foundIdx = search(table, buf);
+                if (foundIdx != -1 && foundIdx != i) {
+                    if (*returnSize >= capacity) {
+                        capacity *= 2;
+                        res = realloc(res, capacity * sizeof(int*));
+                    }
+                    res[*returnSize] = malloc(2 * sizeof(int));
+                    res[*returnSize][0] = foundIdx;
+                    res[*returnSize][1] = i;
+                    (*returnSize)++;
+                }
+            }
+
+            // Case 2: Suffix words[i][j...len-1] is a palindrome
+            if (j < len && isPalindrome(words[i], j, len - 1)) {
+                reverseStr(words[i], 0, j - 1, buf);
+                int foundIdx = search(table, buf);
+                if (foundIdx != -1 && foundIdx != i) {
+                    if (*returnSize >= capacity) {
+                        capacity *= 2;
+                        res = realloc(res, capacity * sizeof(int*));
+                    }
+                    res[*returnSize] = malloc(2 * sizeof(int));
+                    res[*returnSize][0] = i;
+                    res[*returnSize][1] = foundIdx;
+                    (*returnSize)++;
+                }
+            }
+        }
+    }
+
+    // Free the hash table allocations
+    for (int i = 0; i < HASH_SIZE; i++) {
+        HashNode *curr = table[i];
+        while (curr) {
+            HashNode *tmp = curr;
+            curr = curr->next;
+            free(tmp->word);
+            free(tmp);
+        }
+    }
+
+    *returnColumnSizes = malloc((*returnSize) * sizeof(int));
+    for (int i = 0; i < *returnSize; i++) {
+        (*returnColumnSizes)[i] = 2;
+    }
+
+    return res;
+}
