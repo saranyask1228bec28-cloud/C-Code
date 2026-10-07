@@ -1,0 +1,31 @@
+#include <stdlib.h>
+
+/**
+ * Note: The returned array must be malloced, assume caller calls free().
+ */
+int* intersection(int* nums1, int nums1Size, int* nums2, int nums2Size, int* returnSize) {
+    // Array to track if a number exists in nums1 (Constraint: 0 <= nums[i] <= 1000)
+    int freq[1001] = {0};
+    
+    // Mark elements present in nums1
+    for (int i = 0; i < nums1Size; i++) {
+        freq[nums1[i]] = 1; 
+    }
+    
+    // Allocate space for the output array (at most it will be the size of the smaller array)
+    int maxIntersectionSize = nums1Size < nums2Size ? nums1Size : nums2Size;
+    int* result = (int*)malloc(maxIntersectionSize * sizeof(int));
+    int count = 0;
+    
+    // Check elements in nums2 against the frequency tracker
+    for (int i = 0; i < nums2Size; i++) {
+        // If it exists in nums1 and hasn't been added to the result yet
+        if (freq[nums2[i]] == 1) {
+            result[count++] = nums2[i];
+            freq[nums2[i]] = 2; // Mark as added to prevent duplicate entries
+        }
+    }
+    
+    *returnSize = count;
+    return result;
+}
